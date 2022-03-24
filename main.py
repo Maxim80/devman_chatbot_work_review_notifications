@@ -7,7 +7,25 @@ import logging
 import os
 
 
-load_dotenv()
+
+def get_response_from_api(token, timestamp):
+    url = 'https://dvmn.org/api/long_polling/'
+
+    headers = {
+        'Authorization': f'Token {token}'
+    }
+
+    params = {
+        'timestamp': timestamp,
+    }
+
+    response = requests.get(url, headers=headers, params=params, timeout=120)
+    response.raise_for_status()
+    return response.json()
+
+
+def get_telegram_bot(token):
+    return telegram.Bot(token=token)
 
 
 def generate_message_text(attempt):
@@ -22,44 +40,38 @@ def generate_message_text(attempt):
 
 
 def main(chat_id):
-    url = 'https://dvmn.org/api/long_polling/'
+    load_dotenv()
+    devman_api_token = os.getenv("DEVMAN_API_TOKEN")
+    telegram_bot_api_token = os.getenv('TELEGRAM_BOT_API_TOKEN')
 
-    headers = {
-        'Authorization': f'Token {os.getenv("DEVMAN_TOKEN")}'
-    }
+    telegram_bot = get_telegram_bot(telegram_bot_api_token)
 
-    params = {
-        'timestamp': '',
-    }
-
-    bot = telegram.Bot(token=os.getenv('TELEGRAM_BOT_API_TOKEN'))
+    timestamp = ''
 
     while True:
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=120)
-            response.raise_for_status()
-            response_dict = response.json()
-            logger.debug(f"request_query: {response_dict['request_query']}")
+            api_response = get_response_from_api(devman_api_token, timestamp)
+            logger.debug(f"request_query: {api_response['request_query']}")
 
-            if response_dict['status'] == 'timeout':
-                timestamp = response.json()['timestamp_to_request']
-                params['timestamp'] = response_dict['timestamp_to_request']
+            if api_response['status'] == 'timeout':
+                timestamp = api_response['timestamp_to_request']
 
-            if response_dict['status'] == 'found':
-                for attempt in response_dict['new_attempts']:
+            if api_response['status'] == 'found':
+                for attempt in api_response['new_attempts']:
                     message_text = generate_message_text(attempt)
-                    bot.send_message(chat_id=chat_id, text=message_text)
-                    params['timestamp'] = response_dict['last_attempt_timestamp']
+                    telegram_bot.send_message(chat_id=chat_id, text=message_text)
+                    timestamp = api_response['last_attempt_timestamp']
 
         except requests.exceptions.ReadTimeout:
-            logger.debug('Нет ответа от сервера.')
-            sleep(1)
             continue
 
         except requests.exceptions.ConnectionError:
             logger.debug('Нет подключения к интернету.')
             sleep(1)
             continue
+
+        except KeyboardInterrupt:
+            break
 
 
 if __name__ == '__main__':
@@ -72,7 +84,4 @@ if __name__ == '__main__':
     logger = logging.getLogger('logger')
     logger.disabled = not args.logger
 
-    try:
-        main(args.chat_id)
-    except KeyboardInterrupt:
-        pass
+    main(args.chat_id)

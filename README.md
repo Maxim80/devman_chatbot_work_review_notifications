@@ -19,7 +19,7 @@ pip install -r requirements.txt
   
 Запустить микросервис:
 ```
-python main.py chat_id=<ваш telegram chat ID> --logger
+python main.py <ваш telegram chat ID> --logger
 ```
 Аргументы:  
 `chat_id` - Обязательный агрумент, ваш telegram chat id.  
