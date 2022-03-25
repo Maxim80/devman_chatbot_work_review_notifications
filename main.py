@@ -7,6 +7,12 @@ import logging
 import os
 
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('chat_id', type=str, help='Telegram chat ID.')
+    parser.add_argument('--logger', action='store_true', help='Enable logger')
+    return parser.parse_args()
+
 
 def get_response_from_api(token, timestamp):
     url = 'https://dvmn.org/api/long_polling/'
@@ -24,10 +30,6 @@ def get_response_from_api(token, timestamp):
     return response.json()
 
 
-def get_telegram_bot(token):
-    return telegram.Bot(token=token)
-
-
 def generate_message_text(attempt):
     title = f'У вас проверили работу "{attempt["lesson_title"]}"\n\n'
     lesson_url = attempt['lesson_url']
@@ -39,28 +41,34 @@ def generate_message_text(attempt):
         return f'{title}{main_text}{lesson_url}'
 
 
-def main(chat_id):
+def main():
+    args = get_args()
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger('logger')
+    logger.disabled = not args.logger
+
     load_dotenv()
     devman_api_token = os.getenv("DEVMAN_API_TOKEN")
     telegram_bot_api_token = os.getenv('TELEGRAM_BOT_API_TOKEN')
 
-    telegram_bot = get_telegram_bot(telegram_bot_api_token)
+    telegram_bot = telegram.Bot(token=telegram_bot_api_token)
 
     timestamp = ''
 
     while True:
         try:
-            api_response = get_response_from_api(devman_api_token, timestamp)
-            logger.debug(f"request_query: {api_response['request_query']}")
+            verified_works = get_response_from_api(devman_api_token, timestamp)
+            logger.debug(f"request_query: {verified_works['request_query']}")
 
-            if api_response['status'] == 'timeout':
-                timestamp = api_response['timestamp_to_request']
+            if verified_works['status'] == 'timeout':
+                timestamp = verified_works['timestamp_to_request']
 
-            if api_response['status'] == 'found':
-                for attempt in api_response['new_attempts']:
+            if verified_works['status'] == 'found':
+                for attempt in verified_works['new_attempts']:
                     message_text = generate_message_text(attempt)
-                    telegram_bot.send_message(chat_id=chat_id, text=message_text)
-                    timestamp = api_response['last_attempt_timestamp']
+                    telegram_bot.send_message(chat_id=args.chat_id, text=message_text)
+                    timestamp = verified_works['last_attempt_timestamp']
 
         except requests.exceptions.ReadTimeout:
             continue
@@ -75,13 +83,4 @@ def main(chat_id):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('chat_id', type=str, help='Telegram chat ID.')
-    parser.add_argument('--logger', action='store_true', help='Enable logger')
-    args = parser.parse_args()
-
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger('logger')
-    logger.disabled = not args.logger
-
-    main(args.chat_id)
+    main()
