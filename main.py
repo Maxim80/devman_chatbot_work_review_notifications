@@ -49,8 +49,8 @@ def main():
     logger.disabled = not args.logger
 
     load_dotenv()
-    devman_api_token = os.getenv("DEVMAN_API_TOKEN")
-    telegram_bot_api_token = os.getenv('TELEGRAM_BOT_API_TOKEN')
+    devman_api_token = os.environ["DEVMAN_API_TOKEN"]
+    telegram_bot_api_token = os.environ['TELEGRAM_BOT_API_TOKEN']
 
     telegram_bot = telegram.Bot(token=telegram_bot_api_token)
 
