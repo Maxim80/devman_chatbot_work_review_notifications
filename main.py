@@ -1,17 +1,10 @@
 from dotenv import load_dotenv
 from time import sleep
+from handlers import TelegramLogsHandler
 import requests
 import telegram
-import argparse
 import logging
 import os
-
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('chat_id', type=str, help='Telegram chat ID.')
-    parser.add_argument('--logger', action='store_true', help='Enable logger')
-    return parser.parse_args()
 
 
 def get_response_from_api(token, timestamp):
@@ -41,22 +34,33 @@ def generate_message_text(attempt):
         return f'{title}{main_text}{lesson_url}'
 
 
-def main():
-    args = get_args()
-
+def get_logger(tg_bot, chat_id):
     logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger('logger')
-    logger.disabled = not args.logger
+    logger = logging.getLogger('bot_logger')
+    logger.addHandler(TelegramLogsHandler(tg_bot, chat_id))
+    return logger
 
+
+def main():
     load_dotenv()
-    devman_api_token = os.environ["DEVMAN_API_TOKEN"]
-    telegram_bot_api_token = os.environ['TELEGRAM_BOT_API_TOKEN']
+    # devman_api_token = os.environ["DEVMAN_API_TOKEN"]
+    # telegram_bot_api_token = os.environ['TELEGRAM_BOT_API_TOKEN']
+    # admin_chat_id = os.environ['ADMIN_CHAT_ID']
+    # user_chat_id = os.environ['USER_CHAT_ID']
+
+    devman_api_token = os.getenv("DEVMAN_API_TOKEN")
+    telegram_bot_api_token = os.getenv('TELEGRAM_BOT_API_TOKEN')
+    admin_chat_id = os.getenv('ADMIN_CHAT_ID')
+    user_chat_id = os.getenv('USER_CHAT_ID')
 
     telegram_bot = telegram.Bot(token=telegram_bot_api_token)
+
+    logger = get_logger(telegram_bot, admin_chat_id)
 
     timestamp = ''
 
     while True:
+        logger.info('Бот запущен')
         try:
             verified_works = get_response_from_api(devman_api_token, timestamp)
             logger.debug(f"request_query: {verified_works['request_query']}")
@@ -67,18 +71,20 @@ def main():
             if verified_works['status'] == 'found':
                 for attempt in verified_works['new_attempts']:
                     message_text = generate_message_text(attempt)
-                    telegram_bot.send_message(chat_id=args.chat_id, text=message_text)
+                    telegram_bot.send_message(chat_id=user_chat_id, text=message_text)
                     timestamp = verified_works['last_attempt_timestamp']
 
         except requests.exceptions.ReadTimeout:
+            logger.debug('Нет ответа от сервера')
             continue
 
         except requests.exceptions.ConnectionError:
-            logger.debug('Нет подключения к интернету.')
+            logger.debug('Нет подключения к интернету')
             sleep(1)
             continue
 
         except KeyboardInterrupt:
+            logger.info('Работа бота остановлена')
             break
 
 
