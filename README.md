@@ -21,12 +21,8 @@ pip install -r requirements.txt
   
 Запустить:
 ```
-python main.py <ваш telegram chat ID> --logger
+python main.py
 ```
-Аргументы:  
-`chat_id` - Обязательный агрумент, ваш telegram chat id.  
-`--logger` - Не обязательный аргумент, включает debug.  
-  
   
 ## Цели проекта
 Проект написан в учебных целях в рамках курса по python-программированию на сайте [Devman](https://dvmn.org/).
