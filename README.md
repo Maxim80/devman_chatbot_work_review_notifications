@@ -12,12 +12,14 @@ pip install -r requirements.txt
   
   
 ## Как запустить
-Перед запуском необходимо создать файл `.env` и указать две переменные:  
-`DEVMAN_TOKEN=<devman api токен>`  
-`TELEGRAM_BOT_API_TOKEN=<telegram api токен>`  
+Перед запуском необходимо добавить следующие переменные окружения:  
+`export DEVMAN_API_TOKEN=<значение>` API токен devman.  
+`export TELEGRAM_BOT_API_TOKEN=<значение>` telegram bot токен.  
+`export ADMIN_CHAT_ID=<значение>` ID чата администратора, куда будут присылаться логи.  
+`export USER_CHAT_ID=<значение>` ID чата пользователя, куда будет присылаться информация о проверенных работах.  
+    
   
-  
-Запустить микросервис:
+Запустить:
 ```
 python main.py <ваш telegram chat ID> --logger
 ```
