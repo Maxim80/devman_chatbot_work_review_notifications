@@ -43,15 +43,10 @@ def get_logger(tg_bot, chat_id):
 
 def main():
     load_dotenv()
-    # devman_api_token = os.environ["DEVMAN_API_TOKEN"]
-    # telegram_bot_api_token = os.environ['TELEGRAM_BOT_API_TOKEN']
-    # admin_chat_id = os.environ['ADMIN_CHAT_ID']
-    # user_chat_id = os.environ['USER_CHAT_ID']
-
-    devman_api_token = os.getenv("DEVMAN_API_TOKEN")
-    telegram_bot_api_token = os.getenv('TELEGRAM_BOT_API_TOKEN')
-    admin_chat_id = os.getenv('ADMIN_CHAT_ID')
-    user_chat_id = os.getenv('USER_CHAT_ID')
+    devman_api_token = os.environ["DEVMAN_API_TOKEN"]
+    telegram_bot_api_token = os.environ['TELEGRAM_BOT_API_TOKEN']
+    admin_chat_id = os.environ['ADMIN_CHAT_ID']
+    user_chat_id = os.environ['USER_CHAT_ID']
 
     telegram_bot = telegram.Bot(token=telegram_bot_api_token)
 
