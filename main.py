@@ -58,7 +58,6 @@ def main():
     while True:
         try:
             verified_works = get_response_from_api(devman_api_token, timestamp)
-            logger.debug(f"request_query: {verified_works['request_query']}")
 
             if verified_works['status'] == 'timeout':
                 timestamp = verified_works['timestamp_to_request']
@@ -77,10 +76,6 @@ def main():
             logger.debug('Нет подключения к интернету')
             sleep(1)
             continue
-
-        except KeyboardInterrupt:
-            logger.info('Работа бота остановлена')
-            break
 
         except Exception as err:
             logger.error(err, exc_info=True)
