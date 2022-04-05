@@ -7,6 +7,9 @@ import logging
 import os
 
 
+logger = logging.getLogger(__file__)
+
+
 def get_response_from_api(token, timestamp):
     url = 'https://dvmn.org/api/long_polling/'
 
@@ -34,13 +37,6 @@ def generate_message_text(attempt):
         return f'{title}{main_text}{lesson_url}'
 
 
-def get_logger(tg_bot, chat_id):
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger('bot_logger')
-    logger.addHandler(TelegramLogsHandler(tg_bot, chat_id))
-    return logger
-
-
 def main():
     load_dotenv()
     devman_api_token = os.environ["DEVMAN_API_TOKEN"]
@@ -50,13 +46,15 @@ def main():
 
     telegram_bot = telegram.Bot(token=telegram_bot_api_token)
 
-    logger = get_logger(telegram_bot, admin_chat_id)
+    logging.basicConfig(level=logging.DEBUG)
+    logger.addHandler(TelegramLogsHandler(telegram_bot, admin_chat_id))
 
     timestamp = ''
 
     logger.info('Бот запущен')
     while True:
         try:
+            1 / 0
             verified_works = get_response_from_api(devman_api_token, timestamp)
 
             if verified_works['status'] == 'timeout':
@@ -78,7 +76,8 @@ def main():
             continue
 
         except Exception as err:
-            logger.error(err, exc_info=True)
+            logger.exception(err)
+            break
 
 
 if __name__ == '__main__':
