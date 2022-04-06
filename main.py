@@ -54,7 +54,6 @@ def main():
     logger.info('Бот запущен')
     while True:
         try:
-            1 / 0
             verified_works = get_response_from_api(devman_api_token, timestamp)
 
             if verified_works['status'] == 'timeout':
@@ -77,7 +76,6 @@ def main():
 
         except Exception as err:
             logger.exception(err)
-            break
 
 
 if __name__ == '__main__':
